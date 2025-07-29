@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-top:24px;">Financial Log</h1>
+<div class="card">
+    <form method="post">
+        <label>Date</label>
+        <input type="date" name="date" required>
+        <label>Category</label>
+        <input type="text" name="category" required>
+        <label>Description</label>
+        <input type="text" name="description" required>
+        <label>Amount</label>
+        <input type="number" step="0.01" name="amount" required>
+        <input type="submit" value="Add Entry" class="btn">
+    </form>
+</div>
+<div class="card">
+    <h2 style="margin-bottom:0.5em;">Entries</h2>
+    <table style="width:100%; color:#fff; border-collapse:collapse;">
+        <thead>
+            <tr style="color:#aaa; border-bottom:1px solid #333;">
+                <th style="text-align:left; padding:4px;">Date</th>
+                <th style="text-align:left; padding:4px;">Category</th>
+                <th style="text-align:left; padding:4px;">Description</th>
+                <th style="text-align:right; padding:4px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries|reverse %}
+            <tr style="border-bottom:1px solid #222;">
+                <td style="padding:4px;">{{ entry.date }}</td>
+                <td style="padding:4px;">{{ entry.category }}</td>
+                <td style="padding:4px;">{{ entry.description }}</td>
+                <td style="padding:4px; text-align:right; color: {% if entry.amount < 0 %}#ff7f7f{% else %}#7fffa0{% endif %};">${{ entry.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %} 

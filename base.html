@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashTips</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><i class="fa fa-tachometer-alt"></i><span>Home</span></a>
+        <a href="/financial-log" class="nav-item"><i class="fa fa-dollar-sign"></i><span>Financial Log</span></a>
+        <a href="/lessons" class="nav-item"><i class="fa fa-chalkboard-teacher"></i><span>Lessons</span></a>
+        <a href="/challenges" class="nav-item"><i class="fa fa-store"></i><span>Challenges</span></a>
+        <a href="/avatar" class="nav-item"><i class="fa fa-chart-bar"></i><span>Avatar</span></a>
+    </nav>
+</body>
+</html> 

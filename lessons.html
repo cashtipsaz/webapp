@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-top:24px;">Lessons</h1>
+<div style="margin-top:32px; display:flex; flex-direction:column; gap:24px;">
+    {% for lesson in lessons %}
+        <a href="/lessons/{{ lesson.id }}" class="btn" style="font-size:1.2em;">{{ lesson.title }}</a>
+    {% endfor %}
+</div>
+{% endblock %} 

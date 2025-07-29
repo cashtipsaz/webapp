@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-top:24px;">Choose Your Avatar</h1>
+<div style="color:#aaa; text-align:center; margin-bottom:16px;">Select an avatar that represents you</div>
+<img src="{{ user.avatar_url }}" class="avatar-img" alt="Avatar">
+<div class="card" style="max-width:350px; margin:0 auto;">
+    <form method="post">
+        <label>Display Name</label>
+        <input type="text" name="display_name" value="{{ user.display_name }}" required>
+        <input type="submit" value="Save Avatar" class="btn">
+    </form>
+</div>
+{% endblock %} 
