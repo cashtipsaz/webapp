@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-user-circle"></i> Profile Settings</h2>
+    
+    <div class="avatar-preview">
+        {% if user.avatar_url and user.avatar_url != '/static/avatars/default.png' %}
+            <img src="{{ user.avatar_url }}" alt="{{ user.display_name[0] }}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSJ1cmwoI2dyYWRpZW50KSIvPgo8dGV4dCB4PSI1MCIgeT0iNjUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzNiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB0ZXh0LXRyYW5zZm9ybT0idXBwZXJjYXNlIj57eyB1c2VyLmRpc3BsYXlfbmFtZVswXSB9fTwvdGV4dD4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I2U4NWMxMztzdG9wLW9wYWNpdHk6MSIvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmZjdmMzI7c3RvcC1vcGFjaXR5OjEiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4='">
+        {% else %}
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(45deg, #e85c13, #ff7f32); border: 3px solid #e85c13; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: white; text-transform: uppercase;">{{ user.display_name[0] }}</div>
+        {% endif %}
+        <p>Current Avatar</p>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="display_name">Display Name</label>
+            <input type="text" id="display_name" name="display_name" value="{{ user.display_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="avatar">Upload New Avatar</label>
+            <div class="file-upload">
+                <input type="file" id="avatar" name="avatar" accept="image/*">
+                <span>Choose Image</span>
+            </div>
+            <small>Supported formats: PNG, JPG, JPEG, GIF (max 16MB)</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Update Profile</button>
+    </form>
+    
+    <div class="profile-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ user.points }}</div>
+            <div class="stat-label">Total Points</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ user.streak }}</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ user.lessons_done }}</div>
+            <div class="stat-label">Lessons Done</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ user.challenges_done }}</div>
+            <div class="stat-label">Challenges Done</div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

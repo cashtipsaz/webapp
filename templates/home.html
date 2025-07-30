@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="text-align:center; margin-top: 24px;">
+    <h1>Welcome to CashTips</h1>
+    <div style="color:#aaa; font-size:1.2em; margin-bottom: 24px;">Your personal finance companion</div>
+</div>
+<div class="stats-row">
+    <div class="card" style="flex:1;">
+        <div style="color:#aaa; font-size:1em;">Assets</div>
+        <div style="font-size:2em; font-weight:bold;">${{ user.assets }}</div>
+        <div class="orange-bar" style="width:{{ percent_goal }}%; margin: 8px 0;"></div>
+        <div style="color:#aaa; font-size:0.95em;">{{ percent_goal }}% toward your goal</div>
+    </div>
+    <div class="card" style="flex:1;">
+        <div style="color:#aaa; font-size:1em;">Your streak</div>
+        <div style="font-size:2em; font-weight:bold;">{{ user.streak }} <span style="font-size:1.2em;">🔥</span></div>
+        <div style="color:#aaa; font-size:0.95em;">Keep it up for rewards!</div>
+        <div class="streak-bar">
+            {% for i in range(1,6) %}
+                <div class="streak-dot {% if i <= user.streak %}active{% endif %}"></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class="card">
+    <h2 style="margin-bottom:0;">Portfolio Growth</h2>
+    <div style="color:#ccc; margin-bottom:8px;">Cash, Checking, Savings, Stocks</div>
+    <div class="portfolio-legend">
+        <span><span class="legend-dot legend-cash"></span>Cash</span>
+        <span><span class="legend-dot legend-checking"></span>Checking</span>
+        <span><span class="legend-dot legend-savings"></span>Savings</span>
+        <span><span class="legend-dot legend-stocks"></span>Stocks</span>
+    </div>
+</div>
+<div class="stats-row">
+    <div class="stat-box stat-green">+{{ user.month_growth }}%<br><span style="font-size:0.9em; color:#aaa;">Month growth</span></div>
+    <div class="stat-box stat-blue">{{ user.lessons_done }}<br><span style="font-size:0.9em; color:#aaa;">Lessons done</span></div>
+    <div class="stat-box stat-yellow">{{ user.challenges_done }}<br><span style="font-size:0.9em; color:#aaa;">Challenges</span></div>
+</div>
+
+<!-- Portfolio Section -->
+<div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <h2 style="margin:0;">Portfolio</h2>
+        <a href="/portfolio" class="btn" style="font-size:0.9em; padding:6px 12px;">Manage</a>
+    </div>
+    
+    {% if portfolio_items %}
+        <div style="margin-bottom:12px;">
+            <div style="color:#aaa; font-size:0.9em;">Total Value</div>
+            <div style="font-size:1.6em; font-weight:bold; color:#7fffa0;">${{ "%.2f"|format(total_portfolio_value) }}</div>
+        </div>
+        
+        <div style="max-height:120px; overflow-y:auto;">
+            {% for item in portfolio_items[:3] %}
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #333;">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9em;">{{ item.name }}</div>
+                        <div style="color:#aaa; font-size:0.8em;">{{ item.type }}</div>
+                    </div>
+                    <div style="font-weight:bold; color:#7fffa0; font-size:0.9em;">${{ "%.2f"|format(item.amount) }}</div>
+                </div>
+            {% endfor %}
+            {% if portfolio_items|length > 3 %}
+                <div style="text-align:center; color:#aaa; font-size:0.8em; padding:4px 0;">
+                    +{{ portfolio_items|length - 3 }} more items
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div style="text-align:center; color:#aaa; padding:12px;">
+            <i class="fa fa-chart-pie" style="font-size:1.5em; margin-bottom:8px; color:#666;"></i>
+            <p style="margin:8px 0; font-size:0.9em;">No portfolio items yet</p>
+            <a href="/portfolio" class="btn" style="margin-top:8px; padding:8px 16px; font-size:0.85em;">Add Your First Item</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Main Action Buttons - Horizontal Layout -->
+<div style="margin-top:32px;">
+    <div style="display:flex; gap:12px;">
+        <a href="/lessons" class="btn" style="flex:1; text-align:center; padding:12px 8px; font-size:0.9em;">
+            <i class="fa fa-graduation-cap" style="margin-right:4px;"></i>
+            Lessons
+        </a>
+        
+        <a href="/financial-log" class="btn" style="flex:1; text-align:center; padding:12px 8px; font-size:0.9em;">
+            <i class="fa fa-dollar-sign" style="margin-right:4px;"></i>
+            Log
+        </a>
+        
+        <a href="/challenges" class="btn" style="flex:1; text-align:center; padding:12px 8px; font-size:0.9em;">
+            <i class="fa fa-trophy" style="margin-right:4px;"></i>
+            Challenges
+        </a>
+    </div>
+</div>
+{% endblock %} 

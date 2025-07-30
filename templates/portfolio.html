@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fa fa-chart-pie"></i> Portfolio</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Item Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" name="amount" step="0.01" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="type">Type</label>
+            <select id="type" name="type" required>
+                <option value="Cash">Cash</option>
+                <option value="Checking">Checking</option>
+                <option value="Savings">Savings</option>
+                <option value="Stocks">Stocks</option>
+                <option value="Bonds">Bonds</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Crypto">Crypto</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        
+        <button type="submit">Add Portfolio Item</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Your Portfolio Items</h3>
+    
+    {% if portfolio_items %}
+        {% for item in portfolio_items %}
+            <div class="portfolio-item">
+                <div class="item-header">
+                    <h4>{{ item.name }}</h4>
+                    <span class="item-amount">${{ "%.2f"|format(item.amount) }}</span>
+                </div>
+                <div class="item-type">{{ item.type }}</div>
+            </div>
+        {% endfor %}
+        
+        <div class="portfolio-summary">
+            <h4>Total Portfolio Value</h4>
+            <div class="total-amount">
+                ${{ "%.2f"|format(portfolio_items|sum(attribute='amount')) }}
+            </div>
+        </div>
+    {% else %}
+        <p>No portfolio items yet. Add your first item above!</p>
+    {% endif %}
+</div>
+{% endblock %} 

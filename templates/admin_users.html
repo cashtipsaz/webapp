@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-top:24px;">📊 Admin Dashboard - User Data</h1>
+
+<!-- Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    <div class="card" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="margin: 0; color: white;">👥 Total Users</h3>
+        <div style="font-size: 2em; font-weight: bold; color: white;">{{ users|length }}</div>
+    </div>
+    <div class="card" style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <h3 style="margin: 0; color: white;">⭐ Total Points</h3>
+        <div style="font-size: 2em; font-weight: bold; color: white;">{{ users|sum(attribute='points') }}</div>
+    </div>
+    <div class="card" style="text-align: center; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <h3 style="margin: 0; color: white;">💰 Total Assets</h3>
+        <div style="font-size: 2em; font-weight: bold; color: white;">${{ "%.2f"|format(users|sum(attribute='assets')) }}</div>
+    </div>
+    <div class="card" style="text-align: center; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+        <h3 style="margin: 0; color: white;">📚 Lessons Done</h3>
+        <div style="font-size: 2em; font-weight: bold; color: white;">{{ users|sum(attribute='lessons_done') }}</div>
+    </div>
+</div>
+
+<!-- User Table -->
+<div class="card">
+    <h2>👤 All Users (Spreadsheet View)</h2>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.9em;">
+            <thead>
+                <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #555;">ID</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #555;">Username</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #555;">Display Name</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #555;">Email</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Points</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Streak</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Assets</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Lessons</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Challenges</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #555;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr style="border-bottom: 1px solid #333; {% if loop.index % 2 == 0 %}background: #2a2a2a;{% endif %}">
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center;">{{ user.id }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; font-weight: bold;">{{ user.username }}</td>
+                    <td style="padding: 12px; border: 1px solid #555;">{{ user.display_name }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; font-size: 0.8em;">{{ user.email }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; color: #ffd700; font-weight: bold;">{{ user.points }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; color: #ff6b6b;">{{ user.streak }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; color: #51cf66; font-weight: bold;">${{ "%.2f"|format(user.assets) }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; color: #74c0fc;">{{ user.lessons_done }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; color: #ffd43b;">{{ user.challenges_done }}</td>
+                    <td style="padding: 12px; border: 1px solid #555; text-align: center; font-size: 0.8em;">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Database Info -->
+<div class="card" style="margin-top: 20px;">
+    <h2>🗄️ Database Information</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+        <div>
+            <strong>📁 Database File:</strong><br>
+            <code style="background: #333; padding: 4px 8px; border-radius: 4px;">instance/cashtips.db</code>
+        </div>
+        <div>
+            <strong>📊 Total Users:</strong><br>
+            <span style="color: #74c0fc; font-weight: bold;">{{ users|length }}</span>
+        </div>
+        <div>
+            <strong>⭐ Total Points Awarded:</strong><br>
+            <span style="color: #ffd700; font-weight: bold;">{{ users|sum(attribute='points') }}</span>
+        </div>
+        <div>
+            <strong>💰 Total Assets:</strong><br>
+            <span style="color: #51cf66; font-weight: bold;">${{ "%.2f"|format(users|sum(attribute='assets')) }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-top: 20px;">
+    <h2>⚡ Quick Actions</h2>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <a href="/" class="btn" style="background: #667eea;">🏠 Back to Home</a>
+        <a href="/admin/users" class="btn" style="background: #43e97b;">🔄 Refresh Data</a>
+        <button onclick="exportTableToCSV()" class="btn" style="background: #f093fb;">📥 Export to CSV</button>
+    </div>
+</div>
+
+<script>
+function exportTableToCSV() {
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tr');
+    let csv = [];
+    
+    for (let row of rows) {
+        const cols = row.querySelectorAll('td, th');
+        const rowData = [];
+        for (let col of cols) {
+            rowData.push('"' + col.textContent.trim() + '"');
+        }
+        csv.push(rowData.join(','));
+    }
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'user_data.csv';
+    a.click();
+}
+</script>
+{% endblock %} 

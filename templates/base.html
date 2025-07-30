@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashTips</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+        <div class="top-header">
+            <div class="user-avatar">
+                <a href="/avatar" style="text-decoration: none;">
+                    {% if current_user.avatar_url and current_user.avatar_url != '/static/avatars/default.png' %}
+                        <img src="{{ current_user.avatar_url }}" alt="{{ current_user.display_name[0] }}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+Cjx0ZXh0IHg9IjIwIiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHRleHQtdHJhbnNmb3JtPSJ1cHBlcmNhc2UiPnt7IGN1cnJlbnRfdXNlci5kaXNwbGF5X25hbWVbMF0gfX08L3RleHQ+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWRpZW50IiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlODVjMTM7c3RvcC1vcGFjaXR5OjEiLz4KPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZmY3ZjMyO3N0b3Atb3BhY2l0eToxIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+'">
+                    {% else %}
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, #e85c13, #ff7f32); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: white; text-transform: uppercase;">{{ current_user.display_name[0] }}</div>
+                    {% endif %}
+                </a>
+            </div>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    {% endif %}
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+            {% if current_user.is_authenticated %}
+            <nav class="bottom-nav">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/financial-log" class="nav-item">
+                    <i class="fas fa-list"></i>
+                    <span>Log</span>
+                </a>
+                <a href="/lessons" class="nav-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Lessons</span>
+                </a>
+                <a href="/challenges" class="nav-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>Challenges</span>
+                </a>
+                <a href="/portfolio" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Portfolio</span>
+                </a>
+                {% if current_user.username == 'admin' %}
+                <a href="/admin/users" class="nav-item">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    
+    <script>
+        // Tab functionality for challenges
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and panes
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabPanes.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding pane
+                    this.classList.add('active');
+                    document.querySelector(`.tab-pane[data-tab="${targetTab}"]`).classList.add('active');
+                });
+            });
+            
+            // Highlight active navigation item
+            const currentPath = window.location.pathname;
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === currentPath || (currentPath === '/' && href === '/')) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

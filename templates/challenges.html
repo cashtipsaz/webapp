@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 style="margin-top:24px;">Challenges</h1>
+<div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+    <div style="font-size:1.2em; font-weight:bold;">Your points:</div>
+    <div style="background:#2a1a0a; color:#e85c13; font-size:1.2em; font-weight:bold; border-radius:16px; padding:6px 18px;">{{ user.points }}</div>
+</div>
+
+<div class="card" style="padding-bottom:0;">
+    <div class="challenge-tabs">
+        <div class="tab active" data-tab="daily">Daily</div>
+        <div class="tab" data-tab="weekly">Weekly</div>
+        <div class="tab" data-tab="completed">Completed</div>
+    </div>
+    
+    <div class="tab-content">
+        <!-- Daily Challenges -->
+        <div class="tab-pane active" data-tab="daily">
+            <div style="margin-top:16px;">
+                {% set daily_challenges = challenges|selectattr('type', 'equalto', 'Daily')|list %}
+                {% if daily_challenges %}
+                    {% for challenge in daily_challenges %}
+                        <div class="challenge-card">
+                            <div class="challenge-header">
+                                <div class="challenge-title">
+                                    <span class="challenge-type daily">{{ challenge.type }}</span>
+                                    <span class="challenge-description">{{ challenge.description }}</span>
+                                </div>
+                                <span class="challenge-points">+{{ challenge.points }} points</span>
+                            </div>
+                            {% if not user_progress.get(challenge.id, False) %}
+                                <form method="post" class="challenge-actions">
+                                    <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                                    <button type="submit" class="complete-btn">Complete Challenge</button>
+                                </form>
+                            {% else %}
+                                <form method="post" class="challenge-actions">
+                                    <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                                    <button type="submit" class="uncomplete-btn">
+                                        <i class="fa fa-check-circle"></i> Uncomplete
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fa fa-calendar-day"></i>
+                        <p>No daily challenges available at the moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Weekly Challenges -->
+        <div class="tab-pane" data-tab="weekly">
+            <div style="margin-top:16px;">
+                {% set weekly_challenges = challenges|selectattr('type', 'equalto', 'Weekly')|list %}
+                {% if weekly_challenges %}
+                    {% for challenge in weekly_challenges %}
+                        <div class="challenge-card">
+                            <div class="challenge-header">
+                                <div class="challenge-title">
+                                    <span class="challenge-type weekly">{{ challenge.type }}</span>
+                                    <span class="challenge-description">{{ challenge.description }}</span>
+                                </div>
+                                <span class="challenge-points">+{{ challenge.points }} points</span>
+                            </div>
+                            {% if not user_progress.get(challenge.id, False) %}
+                                <form method="post" class="challenge-actions">
+                                    <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                                    <button type="submit" class="complete-btn">Complete Challenge</button>
+                                </form>
+                            {% else %}
+                                <form method="post" class="challenge-actions">
+                                    <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                                    <button type="submit" class="uncomplete-btn">
+                                        <i class="fa fa-check-circle"></i> Uncomplete
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fa fa-calendar-week"></i>
+                        <p>No weekly challenges available at the moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Completed Challenges -->
+        <div class="tab-pane" data-tab="completed">
+            <div style="margin-top:16px;">
+                {% set completed_challenges = [] %}
+                {% for challenge in challenges %}
+                    {% if user_progress.get(challenge.id, False) %}
+                        {% set _ = completed_challenges.append(challenge) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if completed_challenges %}
+                    {% for challenge in completed_challenges %}
+                        <div class="challenge-card completed">
+                            <div class="challenge-header">
+                                <div class="challenge-title">
+                                    <span class="challenge-type {{ challenge.type|lower }}">{{ challenge.type }}</span>
+                                    <span class="challenge-description">{{ challenge.description }}</span>
+                                </div>
+                                <span class="challenge-points completed">Completed</span>
+                            </div>
+                            <div class="completed-badge">
+                                <i class="fa fa-check-circle"></i> +{{ challenge.points }} points earned
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fa fa-trophy"></i>
+                        <p>No completed challenges yet. Start completing challenges to see them here!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all tabs and panes
+            tabs.forEach(t => t.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding pane
+            this.classList.add('active');
+            const targetPane = document.querySelector(`.tab-pane[data-tab="${targetTab}"]`);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
