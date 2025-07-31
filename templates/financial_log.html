@@ -1,40 +1,767 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 style="margin-top:24px;">Financial Log</h1>
-<div class="card">
-    <form method="post">
-        <label>Date</label>
-        <input type="date" name="date" required>
-        <label>Category</label>
-        <input type="text" name="category" required>
-        <label>Description</label>
-        <input type="text" name="description" required>
-        <label>Amount</label>
-        <input type="number" step="0.01" name="amount" required>
-        <input type="submit" value="Add Entry" class="btn">
-    </form>
-</div>
-<div class="card">
-    <h2 style="margin-bottom:0.5em;">Entries</h2>
-    <table style="width:100%; color:#fff; border-collapse:collapse;">
-        <thead>
-            <tr style="color:#aaa; border-bottom:1px solid #333;">
-                <th style="text-align:left; padding:4px;">Date</th>
-                <th style="text-align:left; padding:4px;">Category</th>
-                <th style="text-align:left; padding:4px;">Description</th>
-                <th style="text-align:right; padding:4px;">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in entries|reverse %}
-            <tr style="border-bottom:1px solid #222;">
-                <td style="padding:4px;">{{ entry.date }}</td>
-                <td style="padding:4px;">{{ entry.category }}</td>
-                <td style="padding:4px;">{{ entry.description }}</td>
-                <td style="padding:4px; text-align:right; color: {% if entry.amount < 0 %}#ff7f7f{% else %}#7fffa0{% endif %};">${{ entry.amount }}</td>
-            </tr>
+<div class="financial-log-container">
+    <!-- Header Section -->
+    <div class="financial-header">
+        <h1>💸 Expense Tracker</h1>
+        <p class="subtitle">Track your expenses and spending habits</p>
+    </div>
+
+    <!-- Spending Goal Section -->
+    <div class="spending-goal-card">
+        <div class="goal-header">
+            <h2>🎯 Spending Goal Tracker</h2>
+            <div class="goal-display">
+                <span class="current-goal">${{ "%.2f"|format(spending_goal) }}</span>
+                <button class="edit-goal-btn" onclick="toggleSpendingGoalEdit()">✏️ Edit</button>
+            </div>
+        </div>
+        
+        {% if spending_complete and under_budget %}
+        <div class="congratulations-banner" id="congratulationsBanner">
+            <div class="confetti">🎉</div>
+            <h3>🎊 Congratulations! 🎊</h3>
+            <p>You've successfully stayed under your spending goal for {{ spending_days }} days!</p>
+            <div class="confetti">🎉</div>
+        </div>
+        <script>
+            setTimeout(function() {
+                const banner = document.getElementById('congratulationsBanner');
+                if (banner) {
+                    banner.style.opacity = '0';
+                    setTimeout(() => banner.style.display = 'none', 500);
+                }
+            }, 5000);
+        </script>
+        {% endif %}
+        
+        <!-- Day Tracker -->
+        <div class="day-tracker">
+            <div class="tracker-info">
+                <div class="tracker-item">
+                    <span class="tracker-label">📅 Days Elapsed:</span>
+                    <span class="tracker-value">{{ days_elapsed }}</span>
+                </div>
+                <div class="tracker-item">
+                    <span class="tracker-label">⏰ Days Remaining:</span>
+                    <span class="tracker-value">{{ days_remaining }}</span>
+                </div>
+                <div class="tracker-item">
+                    <span class="tracker-label">🎯 Goal Period:</span>
+                    <span class="tracker-value">{{ spending_days }} days</span>
+                </div>
+            </div>
+        </div>
+        
+        <form method="POST" action="{{ url_for('update_spending_goal') }}" class="goal-form" id="spendingGoalForm" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="spending_goal">💸 Spending Goal</label>
+                    <input type="number" id="spending_goal" name="spending_goal" step="0.01" value="{{ spending_goal }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="period_type">📅 Goal Period Type</label>
+                    <select id="period_type" name="period_type" onchange="updateDaysInput()" required>
+                        <option value="weekly" {% if spending_days <= 7 %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if spending_days > 7 and spending_days <= 31 %}selected{% endif %}>Monthly</option>
+                        <option value="yearly" {% if spending_days > 31 %}selected{% endif %}>Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="spending_days">📅 Goal Period (Days)</label>
+                    <input type="number" id="spending_days" name="spending_days" value="{{ spending_days }}" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <button type="submit" class="btn-save">💾 Save Goal</button>
+                </div>
+            </div>
+        </form>
+        
+        <script>
+            function updateDaysInput() {
+                const periodType = document.getElementById('period_type').value;
+                const daysInput = document.getElementById('spending_days');
+                
+                switch(periodType) {
+                    case 'weekly':
+                        daysInput.min = 5;
+                        daysInput.max = 7;
+                        daysInput.value = 7;
+                        break;
+                    case 'monthly':
+                        daysInput.min = 28;
+                        daysInput.max = 31;
+                        daysInput.value = 30;
+                        break;
+                    case 'yearly':
+                        daysInput.min = 365;
+                        daysInput.max = 366;
+                        daysInput.value = 365;
+                        break;
+                }
+            }
+            
+            // Initialize on page load
+            updateDaysInput();
+        </script>
+        
+        <div class="goal-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ spending_progress }}%"></div>
+            </div>
+            <div class="progress-text">
+                <span>Spent: ${{ "%.2f"|format(expense_total) }}</span>
+                <span>Goal: ${{ "%.2f"|format(spending_goal) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>{{ entries|length }}</h3>
+                <p>Total Entries</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💸</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(expense_total) }}</h3>
+                <p>Total Expenses</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(spending_goal) }}</h3>
+                <p>Spending Goal</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Entry Form -->
+    <div class="add-entry-card">
+        <h2>➕ Add New Expense</h2>
+        <form method="post" class="entry-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date">📅 Date</label>
+                    <input type="date" id="date" name="date" required value="{{ today }}">
+                </div>
+                <div class="form-group">
+                    <label for="category">🏷️ Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select Category</option>
+                        <option value="Income">💰 Income</option>
+                        <option value="Food">🍕 Food & Dining</option>
+                        <option value="Transportation">🚗 Transportation</option>
+                        <option value="Entertainment">🎬 Entertainment</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Bills">📄 Bills & Utilities</option>
+                        <option value="Healthcare">🏥 Healthcare</option>
+                        <option value="Education">📚 Education</option>
+                        <option value="Savings">💎 Savings</option>
+                        <option value="Investment">📈 Investment</option>
+                        <option value="Other">📝 Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="description">📝 Description</label>
+                    <input type="text" id="description" name="description" placeholder="Enter description..." required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="amount">💵 Expense Amount</label>
+                    <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-add">➕ Add Expense</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Entries List -->
+    <div class="entries-card">
+        <div class="entries-header">
+            <h2>📋 Recent Expenses</h2>
+            {% if entries %}
+            <div class="entries-summary">
+                <span class="summary-item">
+                    <span class="summary-label">Total Expenses:</span>
+                    <span class="summary-value negative">${{ "%.2f"|format(expense_total) }}</span>
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if entries %}
+        <div class="entries-list">
+            {% for entry in entries %}
+            <div class="entry-item" data-entry-id="{{ entry.id }}">
+                <div class="entry-icon">
+                    {% if entry.amount > 0 %}
+                        💰
+                    {% else %}
+                        💸
+                    {% endif %}
+                </div>
+                <div class="entry-content">
+                    <div class="entry-header">
+                        <h4>{{ entry.description }}</h4>
+                        <span class="entry-amount {% if entry.amount > 0 %}positive{% else %}negative{% endif %}">
+                            {% if entry.amount > 0 %}+{% endif %}${{ "%.2f"|format(entry.amount) }}
+                        </span>
+                    </div>
+                    <div class="entry-details">
+                        <span class="entry-category">{{ entry.category }}</span>
+                        <span class="entry-date">{{ entry.date.strftime('%b %d, %Y') }}</span>
+                    </div>
+                </div>
+                <div class="entry-actions">
+                    <form method="post" action="{{ url_for('delete_financial_entry', entry_id=entry.id) }}" 
+                          onsubmit="return confirm('Are you sure you want to delete this entry?')" style="display: inline;">
+                        <button type="submit" class="btn-delete" title="Delete Entry">🗑️</button>
+                    </form>
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">💸</div>
+            <h3>No expenses yet</h3>
+            <p>Start tracking your expenses by adding your first expense above!</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+.financial-log-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.financial-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.financial-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    color: white;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.stat-content p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.spending-goal-card {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    color: white;
+    box-shadow: 0 8px 32px rgba(220, 38, 38, 0.3);
+}
+
+.congratulations-banner {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    color: #333;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    animation: bounce 2s infinite;
+    transition: opacity 0.5s ease-out;
+}
+
+.congratulations-banner h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.congratulations-banner p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.confetti {
+    font-size: 2rem;
+    animation: confetti-fall 3s infinite;
+    display: inline-block;
+}
+
+.day-tracker {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.tracker-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.tracker-item {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.tracker-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.tracker-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(20px) rotate(360deg); opacity: 0.7; }
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.goal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.goal-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.current-goal {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.edit-goal-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-goal-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.goal-form {
+    margin-bottom: 20px;
+}
+
+.form-group input {
+    padding: 12px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+}
+
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-save {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.goal-progress {
+    margin-top: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.add-entry-card, .entries-card {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid #333;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.add-entry-card h2, .entries-card h2 {
+    margin: 0 0 20px 0;
+    color: #fff;
+    font-size: 1.5rem;
+}
+
+.entry-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.form-group input, .form-group select {
+    padding: 12px 15px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-top: 20px;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+}
+
+.entries-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.entries-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.summary-label {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.summary-value {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.summary-value.positive {
+    color: #4ade80;
+}
+
+.summary-value.negative {
+    color: #f87171;
+}
+
+.entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.entry-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #2a2a2a;
+    border-radius: 12px;
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.entry-item:hover {
+    transform: translateX(5px);
+    border-color: #667eea;
+}
+
+.entry-icon {
+    font-size: 1.5rem;
+    margin-right: 15px;
+    min-width: 30px;
+}
+
+.entry-content {
+    flex: 1;
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.entry-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.entry-amount {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.entry-amount.positive {
+    color: #4ade80;
+}
+
+.entry-amount.negative {
+    color: #f87171;
+}
+
+.entry-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.entry-category {
+    background: #333;
+    padding: 3px 8px;
+    border-radius: 12px;
+    color: #ccc;
+}
+
+.entry-actions {
+    margin-left: 15px;
+}
+
+.btn-delete {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: #ccc;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .entries-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .entries-summary {
+        justify-content: flex-start;
+    }
+    
+    .entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .entry-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+</style>
+
+<script>
+// Set today's date as default
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+});
+
+function toggleSpendingGoalEdit() {
+    const form = document.getElementById('spendingGoalForm');
+    const btn = document.querySelector('.edit-goal-btn');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        btn.textContent = '❌ Cancel';
+    } else {
+        form.style.display = 'none';
+        btn.textContent = '✏️ Edit';
+    }
+}
+</script>
 {% endblock %} 

@@ -8,16 +8,22 @@
         <iframe width="100%" height="220" src="{{ lesson.video_url }}" frameborder="0" allowfullscreen style="border-radius:12px;"></iframe>
     </div>
     
+    <form method="POST" action="{{ url_for('complete_lesson', lesson_id=lesson.id) }}">
+        {% if completed %}
+            <button type="submit" class="btn" style="background: #dc2626;">
+                <i class="fa fa-times"></i> Mark as Incomplete (-{{ lesson.points_reward }} points)
+            </button>
+        {% else %}
+            <button type="submit" class="btn" style="background: #059669;">
+                <i class="fa fa-check"></i> Mark as Complete (+{{ lesson.points_reward }} points)
+            </button>
+        {% endif %}
+    </form>
+    
     {% if completed %}
         <div style="margin-top:12px; color:#7fffa0; font-weight:bold; text-align:center;">
             <i class="fa fa-check-circle"></i> Lesson Completed!
         </div>
-    {% else %}
-        <form method="POST" action="{{ url_for('complete_lesson', lesson_id=lesson.id) }}">
-            <button type="submit" class="btn">
-                <i class="fa fa-check"></i> Mark as Complete (+{{ lesson.points_reward }} points)
-            </button>
-        </form>
     {% endif %}
 </div>
 {% endblock %} 

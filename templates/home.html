@@ -7,7 +7,7 @@
 <div class="stats-row">
     <div class="card" style="flex:1;">
         <div style="color:#aaa; font-size:1em;">Assets</div>
-        <div style="font-size:2em; font-weight:bold;">${{ user.assets }}</div>
+        <div style="font-size:2em; font-weight:bold;">${{ "%.2f"|format(total_portfolio_value) }}</div>
         <div class="orange-bar" style="width:{{ percent_goal }}%; margin: 8px 0;"></div>
         <div style="color:#aaa; font-size:0.95em;">{{ percent_goal }}% toward your goal</div>
     </div>
@@ -84,8 +84,8 @@
             Lessons
         </a>
         
-        <a href="/financial-log" class="btn" style="flex:1; text-align:center; padding:12px 8px; font-size:0.9em; display:flex; align-items:center; justify-content:center;">
-            <i class="fa fa-dollar-sign" style="margin-right:4px;"></i>
+        <a href="/portfolio" class="btn" style="flex:1; text-align:center; padding:12px 8px; font-size:0.9em; display:flex; align-items:center; justify-content:center;">
+            <i class="fa fa-chart-line" style="margin-right:4px;"></i>
             Track Money
         </a>
         

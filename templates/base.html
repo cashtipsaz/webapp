@@ -41,9 +41,13 @@
                     <i class="fas fa-home"></i>
                     <span>Home</span>
                 </a>
+                <a href="/portfolio" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Portfolio</span>
+                </a>
                 <a href="/financial-log" class="nav-item">
                     <i class="fas fa-list"></i>
-                    <span>Log</span>
+                    <span>Expenses</span>
                 </a>
                 <a href="/lessons" class="nav-item">
                     <i class="fas fa-graduation-cap"></i>
@@ -52,10 +56,6 @@
                 <a href="/challenges" class="nav-item">
                     <i class="fas fa-trophy"></i>
                     <span>Challenges</span>
-                </a>
-                <a href="/portfolio" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Portfolio</span>
                 </a>
                 {% if current_user.username == 'admin' %}
                 <a href="/admin/users" class="nav-item">

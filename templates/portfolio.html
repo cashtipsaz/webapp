@@ -1,60 +1,756 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <h2><i class="fa fa-chart-pie"></i> Portfolio</h2>
-    
-    <form method="POST">
-        <div class="form-group">
-            <label for="name">Item Name</label>
-            <input type="text" id="name" name="name" required>
+<div class="portfolio-container">
+    <!-- Header Section -->
+    <div class="portfolio-header">
+        <h1>📈 Portfolio & Income</h1>
+        <p class="subtitle">Track your assets and set income goals</p>
+    </div>
+
+    <!-- Income Goal Section -->
+    <div class="income-goal-card">
+        <div class="goal-header">
+            <h2>🎯 Income Goal</h2>
+            <div class="goal-display">
+                <span class="current-goal">${{ "%.2f"|format(user.goal) }}</span>
+                <button class="edit-goal-btn" onclick="toggleGoalEdit()">✏️ Edit</button>
+            </div>
         </div>
         
-        <div class="form-group">
-            <label for="amount">Amount</label>
-            <input type="number" id="amount" name="amount" step="0.01" required>
+        {% if user.assets >= user.goal and user.goal > 0 %}
+        <div class="congratulations-banner" id="congratulationsBanner">
+            <div class="confetti">🎉</div>
+            <h3>🎊 Congratulations! 🎊</h3>
+            <p>You've exceeded your monthly income goal!</p>
+            <div class="confetti">🎉</div>
+        </div>
+        <script>
+            setTimeout(function() {
+                const banner = document.getElementById('congratulationsBanner');
+                if (banner) {
+                    banner.style.opacity = '0';
+                    setTimeout(() => banner.style.display = 'none', 500);
+                }
+            }, 5000);
+        </script>
+        {% endif %}
+        
+        <!-- Day Tracker -->
+        <div class="day-tracker">
+            <div class="tracker-info">
+                <div class="tracker-item">
+                    <span class="tracker-label">📅 Days Elapsed:</span>
+                    <span class="tracker-value">{{ income_days_elapsed }}</span>
+                </div>
+                <div class="tracker-item">
+                    <span class="tracker-label">⏰ Days Remaining:</span>
+                    <span class="tracker-value">{{ income_days_remaining }}</span>
+                </div>
+                <div class="tracker-item">
+                    <span class="tracker-label">🎯 Goal Period:</span>
+                    <span class="tracker-value">{{ user.income_days }} days</span>
+                </div>
+            </div>
         </div>
         
-        <div class="form-group">
-            <label for="type">Type</label>
-            <select id="type" name="type" required>
-                <option value="Cash">Cash</option>
-                <option value="Checking">Checking</option>
-                <option value="Savings">Savings</option>
-                <option value="Stocks">Stocks</option>
-                <option value="Bonds">Bonds</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Crypto">Crypto</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
+        <form method="POST" action="{{ url_for('update_income_goal') }}" class="goal-form" id="goalForm" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="income_goal">💵 Income Goal</label>
+                    <input type="number" id="income_goal" name="income_goal" step="0.01" value="{{ user.goal }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="income_period_type">📅 Goal Period Type</label>
+                    <select id="income_period_type" name="income_period_type" onchange="updateIncomeDaysInput()" required>
+                        <option value="weekly" {% if user.income_days <= 7 %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if user.income_days > 7 and user.income_days <= 31 %}selected{% endif %}>Monthly</option>
+                        <option value="yearly" {% if user.income_days > 31 %}selected{% endif %}>Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="income_days">📅 Goal Period (Days)</label>
+                    <input type="number" id="income_days" name="income_days" value="{{ user.income_days }}" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <button type="submit" class="btn-save">💾 Save Goal</button>
+                </div>
+            </div>
+        </form>
         
-        <button type="submit">Add Portfolio Item</button>
-    </form>
+        <script>
+            function updateIncomeDaysInput() {
+                const periodType = document.getElementById('income_period_type').value;
+                const daysInput = document.getElementById('income_days');
+                
+                switch(periodType) {
+                    case 'weekly':
+                        daysInput.min = 5;
+                        daysInput.max = 7;
+                        daysInput.value = 7;
+                        break;
+                    case 'monthly':
+                        daysInput.min = 28;
+                        daysInput.max = 31;
+                        daysInput.value = 30;
+                        break;
+                    case 'yearly':
+                        daysInput.min = 365;
+                        daysInput.max = 366;
+                        daysInput.value = 365;
+                        break;
+                }
+            }
+            
+            // Initialize on page load
+            updateIncomeDaysInput();
+        </script>
+        
+        <div class="goal-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (user.assets / user.goal * 100) if user.goal > 0 else 0 }}%"></div>
+            </div>
+            <div class="progress-text">
+                <span>Current: ${{ "%.2f"|format(user.assets) }}</span>
+                <span>Goal: ${{ "%.2f"|format(user.goal) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(total_portfolio_value) }}</h3>
+                <p>Total Portfolio</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>{{ portfolio_items|length }}</h3>
+                <p>Portfolio Items</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(user.assets) }}</h3>
+                <p>Current Income</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Portfolio Item -->
+    <div class="add-item-card">
+        <h2>➕ Add Portfolio Item</h2>
+        <form method="POST" class="item-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">📝 Item Name</label>
+                    <input type="text" id="name" name="name" placeholder="e.g., Salary, Investment, Side Hustle" required>
+                </div>
+                <div class="form-group">
+                    <label for="type">🏷️ Category</label>
+                    <select id="type" name="type" required>
+                        <option value="">Select Category</option>
+                        <option value="Salary">💼 Salary</option>
+                        <option value="Investment">📈 Investment</option>
+                        <option value="Side Hustle">🚀 Side Hustle</option>
+                        <option value="Freelance">💻 Freelance</option>
+                        <option value="Business">🏢 Business</option>
+                        <option value="Dividends">📊 Dividends</option>
+                        <option value="Rental">🏠 Rental Income</option>
+                        <option value="Other">📝 Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="amount">💵 Amount</label>
+                    <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-add">➕ Add Item</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Portfolio Items -->
+    <div class="portfolio-items-card">
+        <div class="items-header">
+            <h2>📋 Portfolio Items</h2>
+            {% if portfolio_items %}
+            <div class="items-summary">
+                <span class="summary-item">
+                    <span class="summary-label">Total Value:</span>
+                    <span class="summary-value positive">${{ "%.2f"|format(total_portfolio_value) }}</span>
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if portfolio_items %}
+        <div class="items-list">
+            {% for item in portfolio_items %}
+            <div class="item-card" data-item-id="{{ item.id }}">
+                <div class="item-icon">
+                    {% if item.type == 'Salary' %}💼
+                    {% elif item.type == 'Investment' %}📈
+                    {% elif item.type == 'Side Hustle' %}🚀
+                    {% elif item.type == 'Freelance' %}💻
+                    {% elif item.type == 'Business' %}🏢
+                    {% elif item.type == 'Dividends' %}📊
+                    {% elif item.type == 'Rental' %}🏠
+                    {% else %}💰
+                    {% endif %}
+                </div>
+                <div class="item-content">
+                    <div class="item-header">
+                        <h4>{{ item.name }}</h4>
+                        <span class="item-amount positive">+${{ "%.2f"|format(item.amount) }}</span>
+                    </div>
+                    <div class="item-details">
+                        <span class="item-category">{{ item.type }}</span>
+                        <span class="item-date">{{ item.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <form method="post" action="{{ url_for('delete_portfolio_item', item_id=item.id) }}" 
+                          onsubmit="return confirm('Are you sure you want to delete this item?')" style="display: inline;">
+                        <button type="submit" class="btn-delete" title="Delete Item">🗑️</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📈</div>
+            <h3>No portfolio items yet</h3>
+            <p>Start building your portfolio by adding your first income source above!</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
-<div class="card">
-    <h3>Your Portfolio Items</h3>
+<style>
+.portfolio-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.portfolio-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.portfolio-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: #888;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.income-goal-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    color: white;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.congratulations-banner {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    color: #333;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    animation: bounce 2s infinite;
+    transition: opacity 0.5s ease-out;
+}
+
+.congratulations-banner h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.congratulations-banner p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.confetti {
+    font-size: 2rem;
+    animation: confetti-fall 3s infinite;
+    display: inline-block;
+}
+
+.day-tracker {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.tracker-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.tracker-item {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.tracker-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.tracker-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(20px) rotate(360deg); opacity: 0.7; }
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.goal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.goal-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.current-goal {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.edit-goal-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-goal-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.goal-form {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 15px;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input {
+    padding: 12px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+}
+
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-save {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.goal-progress {
+    margin-top: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    color: white;
+    border: 1px solid #333;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.stat-content p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.add-item-card, .portfolio-items-card {
+    background: #1a1a1a;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid #333;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.add-item-card h2, .portfolio-items-card h2 {
+    margin: 0 0 20px 0;
+    color: #fff;
+    font-size: 1.5rem;
+}
+
+.item-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.form-group input, .form-group select {
+    padding: 12px 15px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-top: 20px;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+}
+
+.items-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.items-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.summary-label {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.summary-value {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.summary-value.positive {
+    color: #4ade80;
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: #2a2a2a;
+    border-radius: 12px;
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    transform: translateX(5px);
+    border-color: #667eea;
+}
+
+.item-icon {
+    font-size: 2rem;
+    margin-right: 20px;
+    min-width: 40px;
+}
+
+.item-content {
+    flex: 1;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.item-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.item-amount {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.item-amount.positive {
+    color: #4ade80;
+}
+
+.item-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.item-category {
+    background: #333;
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: #ccc;
+}
+
+.item-actions {
+    margin-left: 15px;
+}
+
+.btn-delete {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.btn-delete:hover {
+    background: #b91c1c;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: #ccc;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
     
-    {% if portfolio_items %}
-        {% for item in portfolio_items %}
-            <div class="portfolio-item">
-                <div class="item-header">
-                    <h4>{{ item.name }}</h4>
-                    <span class="item-amount">${{ "%.2f"|format(item.amount) }}</span>
-                </div>
-                <div class="item-type">{{ item.type }}</div>
-            </div>
-        {% endfor %}
-        
-        <div class="portfolio-summary">
-            <h4>Total Portfolio Value</h4>
-            <div class="total-amount">
-                ${{ "%.2f"|format(portfolio_items|sum(attribute='amount')) }}
-            </div>
-        </div>
-    {% else %}
-        <p>No portfolio items yet. Add your first item above!</p>
-    {% endif %}
-</div>
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .goal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .items-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .items-summary {
+        justify-content: flex-start;
+    }
+    
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .item-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+</style>
+
+<script>
+function toggleGoalEdit() {
+    const form = document.getElementById('goalForm');
+    const btn = document.querySelector('.edit-goal-btn');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        btn.textContent = '❌ Cancel';
+    } else {
+        form.style.display = 'none';
+        btn.textContent = '✏️ Edit';
+    }
+}
+</script>
 {% endblock %} 
